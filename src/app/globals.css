@@ -57,7 +57,9 @@ a { color: inherit; text-decoration: none; }
 .screen {
   max-width: 680px;
   margin: 0 auto;
-  padding: var(--space-5) var(--space-3) 48px;
+  padding: var(--space-5) max(var(--space-3), env(safe-area-inset-left)) 48px
+    max(var(--space-3), env(safe-area-inset-right));
+  padding-bottom: max(48px, env(safe-area-inset-bottom));
 }
 
 .title { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
@@ -68,6 +70,8 @@ a { color: inherit; text-decoration: none; }
 .muted { color: var(--text-muted); }
 
 .card {
+  /* Long names and addresses wrap instead of pushing the card wide. */
+  overflow-wrap: anywhere;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-large);
@@ -93,6 +97,10 @@ a { color: inherit; text-decoration: none; }
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
+  min-height: 48px;
+  /* Stops iOS from adding its own tap highlight over the button. */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .button:hover { opacity: 0.9; }
 .button:disabled { opacity: 0.5; cursor: default; }
@@ -106,13 +114,16 @@ a { color: inherit; text-decoration: none; }
 .field { display: flex; flex-direction: column; gap: var(--space-1); }
 .field label { font-size: 13px; color: var(--text-secondary); }
 .field input {
-  padding: 12px var(--space-2);
+  padding: 13px var(--space-2);
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--text);
-  font-size: 15px;
+  /* 16px keeps iOS Safari from zooming in when the field takes focus. */
+  font-size: 16px;
   font-family: inherit;
+  width: 100%;
+  min-height: 48px;
 }
 .field input:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
 
@@ -135,3 +146,71 @@ a { color: inherit; text-decoration: none; }
 }
 
 .empty { text-align: center; padding: 48px var(--space-3); color: var(--text-muted); }
+
+/* Card rows: label left, value right, but wrap onto two lines when the value
+   is too long to sit beside its label on a narrow screen. */
+.spread {
+  flex-wrap: wrap;
+}
+.spread > :last-child {
+  text-align: right;
+}
+
+/* Phones. The admin header stops competing for one line, and anything
+   tappable spans the full width so it is easy to hit with a thumb. */
+@media (max-width: 560px) {
+  .screen {
+    padding-top: var(--space-3);
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .screen > .spread {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+
+  .screen > .spread .button {
+    width: 100%;
+  }
+
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .row .button {
+    width: 100%;
+  }
+
+  .card .spread > :last-child {
+    text-align: left;
+  }
+}
+
+/* Respect a reduced-motion preference for the few transitions we have. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Order rows are links; make that obvious and comfortable to tap. */
+a.card {
+  display: block;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+a.card:hover {
+  border-color: var(--primary);
+}
+a.card:active {
+  background: var(--background-element);
+}
+a.card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
