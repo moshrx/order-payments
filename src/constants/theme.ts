@@ -1,6 +1,6 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Design tokens for the app. Colors are defined once per scheme and read
+ * through `useTheme()` so every screen stays consistent in light and dark.
  */
 
 import '@/global.css';
@@ -9,18 +9,34 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
+    text: '#11181C',
+    textSecondary: '#60646C',
+    textMuted: '#8B8F98',
+    background: '#F7F8FA',
+    card: '#FFFFFF',
     backgroundElement: '#F0F0F3',
     backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    border: '#E4E6EB',
+    primary: '#1F6FEB',
+    primaryText: '#FFFFFF',
+    primarySoft: '#E8F1FE',
+    danger: '#D93636',
+    dangerSoft: '#FDECEC',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
+    text: '#ECEDEE',
+    textSecondary: '#B0B4BA',
+    textMuted: '#7C8085',
+    background: '#0B0C0E',
+    card: '#161719',
     backgroundElement: '#212225',
     backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    border: '#2A2C30',
+    primary: '#4D8DF6',
+    primaryText: '#0B0C0E',
+    primarySoft: '#152441',
+    danger: '#F26D6D',
+    dangerSoft: '#2A1618',
   },
 } as const;
 
@@ -61,5 +77,11 @@ export const Spacing = {
   six: 64,
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
+export const Radius = {
+  small: 8,
+  medium: 12,
+  large: 16,
+  pill: 999,
+} as const;
+
+export const MaxContentWidth = 640;

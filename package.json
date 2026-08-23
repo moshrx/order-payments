@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~57.0.12",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@supabase/supabase-js": "^2.109.0",
     "expo": "~57.0.15",
     "expo-constants": "~57.0.13",
     "expo-device": "~57.0.1",
@@ -24,20 +26,26 @@
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
+    "react-native-url-polyfill": "^4.0.0",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "~57.0.1",
     "typescript": "~6.0.3"
   },
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "web:client": "node scripts/set-variant.js client && APP_VARIANT=client expo start --web",
+    "web:customer": "node scripts/set-variant.js customer && APP_VARIANT=customer expo start --web",
+    "build:client": "node scripts/set-variant.js client && APP_VARIANT=client expo export --platform web --output-dir dist/client",
+    "build:customer": "node scripts/set-variant.js customer && APP_VARIANT=customer expo export --platform web --output-dir dist/customer",
+    "build:all": "npm run build:client && npm run build:customer"
   },
   "private": true
 }

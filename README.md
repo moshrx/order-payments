@@ -1,56 +1,100 @@
-# Welcome to your Expo app 👋
+# Orders
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A small mobile app (Expo / React Native) backed by Supabase, with two sides:
 
-## Get started
+- **Client** — signs in, records an order (name, account no, optional address), browses the full history.
+- **Customer view** — read-only. Sees order details and nothing else: no sign-in, no create, no edit, no delete.
 
-1. Install dependencies
+## Setup
+
+1. **Create the table.** In your Supabase dashboard open **SQL Editor → New query**, paste
+   [`supabase/schema.sql`](supabase/schema.sql) and run it. It creates `public.orders`, turns on
+   row level security, and adds the policies below.
+
+2. **Add your keys.** Copy `.env.example` to `.env` and fill in:
+
+   ```
+   EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   ```
+
+   Both come from **Project Settings → Data API / API Keys**. Only ever use the *anon* key here —
+   `EXPO_PUBLIC_` values are readable inside the shipped app bundle. `.env` is gitignored.
+
+3. **Create the client's login.** **Authentication → Users → Add user**, with an email and
+   password. That account is what the order desk signs in with. Don't create accounts for
+   customers — they never sign in.
+
+4. **Run it.**
 
    ```bash
    npm install
+   npx expo start --clear
    ```
 
-2. Start the app
+   Press `i` for the iOS simulator, `a` for Android, `w` for the browser, or scan the QR code
+   with **Expo Go** on a phone.
 
-   ```bash
-   npx expo start
-   ```
+Until `.env` is filled in, every screen shows a "Not connected yet" notice instead of failing.
 
-In the output, you'll find options to open the app in a
+## How the customer is kept out of the client pages
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Two layers, and the second is the one that matters:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+**In the app** — [`src/app/client/_layout.tsx`](src/app/client/_layout.tsx) wraps every `/client`
+route. With no session it renders a redirect to `/sign-in`, so typing the URL, deep-linking, or
+tapping back all land on the sign-in screen rather than the history.
 
-## Get a fresh project
+**In the database** — row level security in [`supabase/schema.sql`](supabase/schema.sql) decides
+what the anon key can actually do:
 
-When you're ready, run:
+| Action | Customer (anon) | Client (signed in) |
+| --- | --- | --- |
+| Read orders | yes | yes |
+| Create an order | **rejected by Postgres** | yes |
+| Delete an order | **rejected by Postgres** | yes |
+| Edit an order | **rejected by Postgres** | **rejected by Postgres** — no update policy exists |
 
-```bash
-npm run reset-project
+So even someone who unpacks the app bundle, takes the anon key and calls the API directly still
+cannot write anything. The UI guard is convenience; RLS is the enforcement.
+
+## Screens
+
+| Route | Who | What |
+| --- | --- | --- |
+| `/` | both | Entry screen — pick Client or Customer view |
+| `/sign-in` | client | Email + password sign-in |
+| `/client` | client (auth) | Order history, newest first, with **New order** and sign out |
+| `/client/new` | client (auth) | The input form (name + account no required, address optional) |
+| `/client/[id]` | client (auth) | Order details, with delete behind a two-step confirm |
+| `/view` | customer | Read-only list of orders |
+| `/view/[id]` | customer | Read-only order details |
+
+## Project layout
+
+```
+src/
+  app/                      expo-router routes (the table above)
+  components/               OrderCard, DetailRow, EmptyState, ErrorNotice, SetupNotice
+  components/ui/            Button, Card, Screen, Text, TextField, Badge
+  constants/theme.ts        colors (light + dark), spacing, radii
+  lib/supabase.ts           Supabase client
+  features/auth/            session state, signIn, signOut
+  features/orders/
+    types.ts                Order model
+    orders-repository.ts    every Supabase query for orders lives here
+    orders-provider.tsx     React context over the repository
+    format.ts               date formatting
+supabase/schema.sql         table + RLS policies + realtime
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Orders are read once on load and then kept current by Supabase realtime, so an order saved on
+the client's phone appears on a customer's open screen without a manual refresh. Pull to refresh
+also works on both lists.
 
-### Other setup steps
+## Worth knowing
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Order details are readable by anyone running the app, because customers don't sign in — that is
+what makes the customer view work without accounts. Account numbers and addresses are therefore
+visible to any holder of the app and anon key. If those need to be private per customer, the
+customer side needs sign-in too, plus a policy narrowing `select` to that customer's own rows.

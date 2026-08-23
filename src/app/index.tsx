@@ -1,98 +1,128 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Link, Redirect } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { SetupNotice } from '@/components/setup-notice';
+import { Screen } from '@/components/ui/screen';
+import { Text } from '@/components/ui/text';
+import { Radius, Spacing } from '@/constants/theme';
+import { useOrders } from '@/features/orders/orders-provider';
+import { useTheme } from '@/hooks/use-theme';
+import { isSupabaseConfigured } from '@/lib/supabase';
+import { isCustomerBuild } from '@/lib/variant';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
+  const { orders } = useOrders();
+
+  // The customer build has no admin screens to choose between.
+  if (isCustomerBuild) return <Redirect href="/view" />;
+
+  if (!isSupabaseConfigured) return <SetupNotice />;
+
+  const count = orders.length;
+  const countLabel = count === 1 ? '1 order recorded' : `${count} orders recorded`;
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <Screen>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.five }]}>
+        <View style={styles.header}>
+          <Text variant="title">Orders</Text>
+          <Text variant="body" tone="secondary">
+            Record an order once, and it appears in the customer view straight away.
+          </Text>
+        </View>
+
+        <View style={styles.options}>
+          <RoleCard
+            mark="C"
+            title="Client"
+            description="Add new orders and browse the full history."
+            href="/client"
+          />
+          <RoleCard
+            mark="U"
+            title="Customer view"
+            description="See order details only. Nothing can be changed here."
+            href="/view"
+          />
+        </View>
+
+        <Text variant="caption" tone="muted" style={styles.footer}>
+          {countLabel}
+        </Text>
+      </ScrollView>
+    </Screen>
   );
 }
 
-export default function HomeScreen() {
+function RoleCard({
+  mark,
+  title,
+  description,
+  href,
+}: {
+  mark: string;
+  title: string;
+  description: string;
+  href: '/client' | '/view';
+}) {
+  const colors = useTheme();
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <Link href={href} asChild>
+      <Pressable accessibilityRole="button" accessibilityLabel={title}>
+        {({ pressed }) => (
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: colors.card, borderColor: colors.border },
+              pressed && styles.pressed,
+            ]}>
+            <View style={[styles.mark, { backgroundColor: colors.primarySoft }]}>
+              <Text variant="heading" tone="primary">
+                {mark}
+              </Text>
+            </View>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+            <View style={styles.cardText}>
+              <Text variant="heading">{title}</Text>
+              <Text variant="caption" tone="secondary">
+                {description}
+              </Text>
+            </View>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+            <Text variant="heading" tone="muted">
+              ›
+            </Text>
+          </View>
+        )}
+      </Pressable>
+    </Link>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
+  content: { padding: Spacing.three, gap: Spacing.five, flexGrow: 1 },
+  header: { gap: Spacing.two },
+  options: { gap: Spacing.three },
+  card: {
     flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
     alignItems: 'center',
     gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    padding: Spacing.three,
+    borderRadius: Radius.large,
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  heroSection: {
+  pressed: { opacity: 0.7 },
+  mark: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
   },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+  cardText: { flex: 1, gap: Spacing.half },
+  footer: { marginTop: 'auto' },
 });
