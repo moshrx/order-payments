@@ -11,3 +11,23 @@ export function formatDate(iso: string) {
     minute: '2-digit',
   });
 }
+
+const cad = new Intl.NumberFormat('en-CA', {
+  style: 'currency',
+  currency: 'CAD',
+  currencyDisplay: 'narrowSymbol',
+});
+
+const inr = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  maximumFractionDigits: 2,
+});
+
+export function formatCad(amount: number) {
+  return cad.format(amount);
+}
+
+export function formatInr(amount: number) {
+  return inr.format(amount);
+}

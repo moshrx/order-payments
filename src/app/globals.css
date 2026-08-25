@@ -12,6 +12,10 @@
   --primary-soft: #e8f1fe;
   --danger: #d93636;
   --danger-soft: #fdecec;
+  --success: #1a7f37;
+  --success-soft: #e6f4ea;
+  --warning: #9a6700;
+  --warning-soft: #fff3d6;
 
   --space-half: 4px;
   --space-1: 8px;
@@ -37,6 +41,10 @@
     --primary-soft: #152441;
     --danger: #f26d6d;
     --danger-soft: #2a1618;
+    --success: #57ab5a;
+    --success-soft: #16261a;
+    --warning: #daaa3f;
+    --warning-soft: #2a2213;
   }
 }
 
@@ -136,6 +144,10 @@ a { color: inherit; text-decoration: none; }
   font-size: 13px;
   font-weight: 600;
 }
+.badge.status-paid { background: var(--success-soft); color: var(--success); }
+.badge.status-partial { background: var(--warning-soft); color: var(--warning); }
+.badge.status-unpaid { background: var(--danger-soft); color: var(--danger); }
+/* Advance keeps the default primary badge colors. */
 
 .notice {
   border-radius: var(--radius);
@@ -146,6 +158,92 @@ a { color: inherit; text-decoration: none; }
 }
 
 .empty { text-align: center; padding: 48px var(--space-3); color: var(--text-muted); }
+
+/* Admin top bar: sticky, aligned to the same column as .screen. */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.navbar-inner {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) max(var(--space-3), env(safe-area-inset-left)) var(--space-2)
+    max(var(--space-3), env(safe-area-inset-right));
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+/* Stays a horizontal row even inside the phone media query below. */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-half);
+}
+.nav-link {
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+}
+.nav-link:hover { background: var(--background-element); }
+.nav-link.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Sent + status tags on a card; keeps its row shape on phones too. */
+.badge-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* Previous / next controls under the admin list. */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* Pager arrows at a list boundary: visible but inert. */
+.pager-disabled { opacity: 0.4; pointer-events: none; }
+
+/* Lock sits in the nav beside the links, but is a button, not a link. */
+.lock-btn {
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+.lock-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* Password gate: centred, and narrower than a normal screen. */
+.lock-screen {
+  max-width: 420px;
+  justify-content: center;
+  min-height: 70vh;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+}
+.check input { width: 16px; height: 16px; accent-color: var(--primary); }
 
 /* Card rows: label left, value right, but wrap onto two lines when the value
    is too long to sit beside its label on a narrow screen. */
