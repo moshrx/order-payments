@@ -1,12 +1,9 @@
-'use client';
+import { formatCad, formatDate, formatInr } from '@/features/orders/format';
+import type { PaymentOrder } from '@/features/orders/types';
 
-import { useEffect, useState } from 'react';
+import { StatusBadge } from './status-badge';
 
-import { fetchOrders } from '@/features/orders/orders-repository';
-import { formatDate } from '@/features/orders/format';
-import type { Order } from '@/features/orders/types';
-
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value }: { label: string; value: string | React.ReactNode }) {
   return (
     <div className="spread">
       <span className="body secondary">{label}</span>
@@ -15,31 +12,24 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function OrderDetail({ id, children }: { id: string; children?: React.ReactNode }) {
-  const [order, setOrder] = useState<Order | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    fetchOrders()
-      .then((all) => setOrder(all.find((o) => o.id === id) ?? null))
-      .catch((e) => setError(e instanceof Error ? e.message : 'Could not load the order.'))
-      .finally(() => setIsLoading(false));
-  }, [id]);
-
-  if (isLoading) return <p className="body muted">Loading…</p>;
-  if (error) return <p className="notice">{error}</p>;
-  if (!order) return <p className="empty">That order no longer exists.</p>;
-
+export function OrderDetail({ order }: { order: PaymentOrder }) {
   return (
-    <div className="stack">
-      <div className="card stack-sm">
-        <Row label="Name" value={order.name} />
-        <Row label="Account no" value={order.accountNo} />
-        {order.address ? <Row label="Address" value={order.address} /> : null}
-        <Row label="Recorded" value={formatDate(order.createdAt)} />
-      </div>
-      {children}
+    <div className="card stack-sm">
+      <Row label="Customer" value={order.customerName} />
+      <Row label="Phone" value={order.phone} />
+      <Row label="Status" value={<StatusBadge status={order.paymentStatus} />} />
+      <Row label="Amount" value={formatCad(order.amountCad)} />
+      <Row label="Rate" value={`₹${order.rateInr} / $1`} />
+      <Row label="Amount (INR)" value={formatInr(order.amountInr)} />
+      <Row label="Paid" value={formatCad(order.paidCad)} />
+      {order.balanceCad > 0 ? (
+        <Row
+          label="Balance"
+          value={`${formatCad(order.balanceCad)} · ${formatInr(order.balanceInr)}`}
+        />
+      ) : null}
+      {order.remark ? <Row label="Remark" value={order.remark} /> : null}
+      <Row label="Recorded" value={formatDate(order.createdAt)} />
     </div>
   );
 }
