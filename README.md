@@ -6,7 +6,7 @@ Next.js app for recording pending orders and showing them to customers.
 
 ```bash
 npm install
-cp .env.example .env.local   # then paste your Supabase URL and anon key
+cp .env.example .env.local   # then paste your Supabase URL and service-role key
 npm run dev
 ```
 
